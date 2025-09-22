@@ -2,9 +2,16 @@ import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 const esquema = new Schema({
-    nombre: String,
+    nombre: {
+        type: String,
+        required: [true, "Falta el campo nombre"]
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
     clave: String,
-    email: String,
     tel: Number
 });
 

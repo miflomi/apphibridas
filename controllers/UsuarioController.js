@@ -1,7 +1,26 @@
 import Usuario from "../models/UsuarioModel.js";
+import bcrypt from "bcrypt";
+import jsonwebtoken from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
+const SECRET_KEY = process.env.SECRET_KEY;
+
 const crearUsuario = async ( request, response) =>{
-    const body = request.body;
-    const nuevoUsuario =  new Usuario(body);
+    const {nombre, email, clave, tel} = request.body;
+
+    if ( !nombre || !email || !clave ) {
+        response.status(401).json({ msg: "Faltan campos obligatorios"});
+        return;
+    }
+    const hash = await bcrypt.hash(clave,10);
+    const usuarioDatos = {
+        nombre,
+        email,
+        clave: hash,
+        tel
+    }
+
+    const nuevoUsuario =  new Usuario(usuarioDatos);
     const usuario = await nuevoUsuario.save();
 
     response.json({ msg: "Usuario creado", data: usuario});
@@ -43,5 +62,29 @@ const updeteUserById = async ( request, response) => {
     }
 }
 
+const login = async(request, response) => {
+    try {
+        const { email, clave } = request.body;
+        const usuario = await Usuario.findOne({email});
+        if(!usuario){
+            response.status(404).json({msg:'El email no existe'});
+            return;
+        }
+        const status = await bcrypt.compare(clave, usuario.clave);
+        if( !status){
+            response.status(404).json({msg: 'Clave invalida'});
+            return;
+        }
+        const payload = {
+            id: usuario._id,
+            nombre: usuario.nombre
+        }
+        const jwt = jsonwebtoken.sign( payload, SECRET_KEY, { expiresIn: '1h'} );
+        response.json({msg: 'Credenciales correctas', data: jwt});
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({msg: 'Tenemos un error en el servidor'});
+    }
+}
 
-export { crearUsuario, listarUsuarios, getUserById, deleteUserById, updeteUserById };
+export { crearUsuario, listarUsuarios, getUserById, deleteUserById, updeteUserById, login };
