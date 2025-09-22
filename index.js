@@ -19,7 +19,7 @@ app.use( express.json() );
 app.use('/', express.static('public'));
 
 app.use(  (request, response, next) => {
-    console.log('Hola soy el middleware 👋');
+    console.log('Hola soy el middleware 👋 ');
     next();
 });
 
